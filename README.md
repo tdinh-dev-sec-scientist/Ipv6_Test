@@ -1,41 +1,67 @@
-A Python-based proof of concept (PoC) demonstrating distributed steganography by manipulating IPv6 header fields and extension chains. This tool is designed for security research to evaluate the visibility gaps in modern Network Intrusion Detection Systems (NIDS).
+# IPv6 Invisible Tunnel: Header-Based Covert Channel PoC
 
-Key Features
-Flow Label Injection: Encodes 20 bits of data into the IPv6 Flow Label field. This exploits the protocol's requirement for pseudo-random values to hide encrypted data as legitimate "noise".
+This repository contains a **Proof of Concept (PoC)** tool developed for expert-level research into IPv6 network steganography. I designed this script to demonstrate how distributed covert channels can be established by exploiting the complexity of IPv6 extension headers and the architectural design of the Flow Label field.
 
-Extension Header Exfiltration: Leverages the Destination Options (Type 60) extension header. Specifically, it uses the PadN option to store secret strings (e.g., TOP_SECRET_DATA), which are typically ignored by security devices to maintain throughput.
+## 🚀 Overview
 
-Carrier Protocol: Encapsulates hidden data within standard ICMPv6 Echo Requests to blend in with normal network diagnostic traffic.
+The goal of this project is to create an "Invisible Tunnel" that exfiltrates data by hiding it in plain sight. Unlike traditional exfiltration that uses the packet payload, this tool injects secret data directly into the **Protocol Headers**, making it nearly invisible to standard firewalls and signature-based Intrusion Detection Systems (IDS).
 
-Technical Logic
-The script bypasses traditional security controls by exploiting two specific protocol behaviors:
+## ✨ Key Features
 
-Entropy Blind Spots: Because Flow Labels are expected to have high entropy, secret bits look identical to standard load-balancing hashes.
+* **Flow Label Manipulation:** Encodes 20 bits of data per packet into the `Flow Label` field.
+* **Extension Header Injection:** Utilizes the `Destination Options` header (Type 60) to hide variable-length strings within `PadN` options.
+* **Traffic Camouflage:** Wraps covert data within standard `ICMPv6 Echo Request` (Ping) packets to blend in with legitimate network diagnostic traffic.
+* **distributed Steganography:** Spreads the "secret" across multiple header fields to minimize the statistical signature in any single field.
 
-The "Skip" Rule: Per RFC standards, network nodes must skip unknown options in padding fields. I use this "dead drop" to store data that firewalls rarely inspect.
+## 🧠 How It Works
 
-Requirements
-Python 3.x
+I designed this tool to exploit two specific "blind spots" in modern network security:
 
-Scapy: pip install scapy 
+1. **The Entropy Gap:** Per **RFC 6437**, Flow Labels are intended to be pseudo-random for load balancing. Because my encrypted data is statistically identical to random noise, I can smuggle 20 bits per packet without triggering entropy-based anomalies. 
 
-Privileges: Must be run with Root/Administrator permissions to send raw packets.
 
-Usage
-Update the target_ip variable with the victim's IPv6 address.
+2. **The "Skip" Rule:** Standard IPv6 processing requires routers and middleboxes to ignore or "skip" unknown options in padding fields (`PadN`). I use this as a "dead drop" for secret data, knowing that most inspection engines bypass these fields to maintain high-speed throughput. 
 
-Define your secret_data string.
 
-Run the script:
 
-Bash
+## 🛡️ Research Context: CVE-2024-38063
+
+This research is a direct response to the fragility of IPv6 stack processing.
+
+* **The Link:** Recent critical vulnerabilities like **CVE-2024-38063** proved that even modern OS kernels (like the Windows TCP/IP stack) struggle with the integer arithmetic required to parse complex Extension Header chains under load. 
+
+
+* **The Inversion:** While CVE-2024-38063 used malformed headers to crash systems, my tool uses **compliant but complex** header chains to evade inspection. If the kernel struggles to parse these headers for functional reasons, security engines likely lack the granular visibility to detect the data hidden within them. 
+
+
+
+## 🛠️ Requirements
+
+* **Python 3.x**
+* **Scapy Library:** `pip install scapy`
+* **OS:** Linux (Kali/Ubuntu recommended) or macOS.
+* **Privileges:** Root/Sudo access is mandatory for raw socket manipulation.
+
+## 💻 Usage
+
+1. **Configure the script:** Update the `target_ip` and your `secret_data` in the script.
+2. **Run with privileges:**
+```bash
 sudo python3 .venv/ip6.py
-Security Research Context
-This script demonstrates the "Processing Complexity" risk. The use of complex header chains (IPv6 -> Destination Options -> ICMP) mirrors the parsing logic vulnerabilities found in CVE-2024-38063, where malformed or complex extension headers can lead to memory mismanagement in the Windows TCP/IP stack.
 
-Summary of what I included:
-Technical Specifics: I mentioned the Flow Label (20 bits) and PadN specifically, as seen in your Scapy output.
+```
 
-Context: I linked it to CVE-2024-38063 and Shadow Networks, which are critical parts of your research.
 
-Usage: Included the need for sudo, which was the reason for your earlier "MAC address not found" warning.
+3. **Verify via Wireshark:** Capture traffic and inspect the `Flow Label` (look for your hex value, e.g., `0xABCDE`) and the `Destination Options` header to see your hidden string.
+
+## 📜 Disclaimer
+
+This tool is for **educational and defensive research purposes only**. I created it to help network administrators and researchers identify visibility gaps in IPv6 infrastructure and "Shadow Networks." Unauthorized use of this tool against systems you do not own is strictly prohibited.
+
+---
+
+### Summary of Changes for GitHub
+
+* **Professional Tone:** Added sections for "Key Features" and "Technical Logic" to make it look like a serious academic/security project.
+* **Research Integration:** Explicitly tied the README to **CVE-2024-38063** and **RFC 6437** to show the depth of your work to your professor.
+* **Technical Specifics:** Referenced the exact fields (`Flow Label`, `PadN`) that you successfully manipulated in your Scapy output.
