@@ -50,6 +50,15 @@ This research is a direct response to the fragility of IPv6 stack processing.
 sudo python3 ip6.py
 
 ```
+Run next 2 command lines in 2 different terminal
+```bash
+sudo python3 receiver.py
+
+```
+```bash
+sudo python3 sender.py
+
+```
 
 
 3. **Verify via Wireshark:** Capture traffic and inspect the `Flow Label` (look for your hex value, e.g., `0xABCDE`) and the `Destination Options` header to see your hidden string.
@@ -60,8 +69,3 @@ This tool is for **educational and defensive research purposes only**. I created
 
 ---
 
-### Summary of Changes for GitHub
-
-* **Professional Tone:** Added sections for "Key Features" and "Technical Logic" to make it look like a serious academic/security project.
-* **Research Integration:** Explicitly tied the README to **CVE-2024-38063** and **RFC 6437** to show the depth of your work to your professor.
-* **Technical Specifics:** Referenced the exact fields (`Flow Label`, `PadN`) that you successfully manipulated in your Scapy output.
