@@ -47,7 +47,7 @@ This research is a direct response to the fragility of IPv6 stack processing.
 1. **Configure the script:** Update the `target_ip` and your `secret_data` in the script.
 2. **Run with privileges:**
 ```bash
-sudo python3 .venv/ip6.py
+sudo python3 ip6.py
 
 ```
 
