@@ -7,13 +7,12 @@ This repository contains the research and proof-of-concept (PoC) framework for *
 ---
 
 ## 📌 Executive Summary
-As the global transition from IPv4 to IPv6 accelerates to address address exhaustion and routing efficiency [cite: 7][cite_start], it introduces structural complexities that many enterprise security systems are not yet designed to handle[cite: 8]. [cite_start]This research investigates a critical vulnerability within the IPv6 Extension Header (EH) mechanism[cite: 9].
+As the global transition from IPv4 to IPv6 accelerates to address address exhaustion and routing efficiency, it introduces structural complexities that many enterprise security systems are not yet designed to handle. This research investigates a critical vulnerability within the IPv6 Extension Header (EH) mechanism.
 
 **The Problem**: Parsing deeply nested EH chains imposes significant computational overhead, leading many commercial firewalls to skip EH inspection entirely, creating a blind spot[cite: 9].
 **The Attack**: By embedding XOR-encrypted command-and-control (C2) data into PadN padding options and synchronizing transmission through pseudo-random Flow Label manipulation, an attacker can operate a shadow network invisible to conventional intrusion detection systems (IDS)[cite: 11].
-**The Defense**: We propose a behavioral defense using a **Deep Learning Autoencoder** capable of detecting the covert channel purely through anomalous reconstruction error[cite: 14].
-
-
+**The Defense**: We propose a behavioral defense using a 
+**Deep Learning Autoencoder** capthat detects the covert channel solely through anomalous reconstruction errors
 
 ---
 
@@ -41,7 +40,7 @@ The defensive strategy utilizes a deep neural network Autoencoder trained exclus
 ---
 
 ## 📊 Experimental Results
-The framework demonstrates the operational risks highlighted in **CVE-2024-38063**, confirming that EH-targeted attacks are viable against modern enterprise infrastructure[cite: 15, 74].
+The framework demonstrates the operational risks highlighted in **CVE-2024-38063**, confirming that EH-targeted attacks are viable against modern enterprise infrastructure.
 
 | Detection Method | Outcome | Root Cause |
 | :--- | :--- | :--- |
@@ -61,20 +60,33 @@ python scripts/capture_traffic.py --output data/benign.pcap --duration 600
 
 Start the listener and send a command via the steganographic tunnel.
 Bash
+# Open 3 terminals
+# Terminal 1
+# Start tcpdump to catch normal packets:
+sudo tcpdump -i lo0 -w normal.pcap
 
-# Start the listener (Implant)
+# Then ctrl-C
+
+# Start tcp dumpt to catch malicious packets:
+sudo tcpdump -i lo0 -w malicious.pcap
+
+#Terminal 2 
+# Start the listener 
 sudo python3 receiver_padn.py
 
+#Terminal 3
 # Send a command from the C2 Server
-sudo python3 listener_padn.py
+sudo python3 sender_padn.py
 
+# Then run:
+sudo python3 pcap_extractor.py
 3. Train & Detect
 
 Train the model on benign data and run the detection engine.
 Bash
 
 # Train the Autoencoder
-python3
+python3 generate results.py
 
 # Run real-time detection
 
