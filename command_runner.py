@@ -5,7 +5,7 @@ import logging
 # Configure logging to track data collection progress
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
-class V7CommandRunner:
+class CommandRunner:
     """
     A class to simulate realistic C2 traffic by executing 
     system commands via the Invisible Tunnel (V7) protocol.
@@ -33,16 +33,13 @@ class V7CommandRunner:
             for cmd in self.commands:
                 self._send_payload(cmd)
                 
-                # Jitter: Wait 3-5 seconds (realistic human/malware behavior)
+                #Wait 3-5 seconds
                 wait_time = random.uniform(3, 5)
                 time.sleep(wait_time)
                 
         logging.info(f"Session Complete. Total packets sent: {self.total_sent}")
 
     def _send_payload(self, cmd):
-        """
-        Placeholder for your Scapy V7 injection logic.
-        """
-        # Here you will call your: send_v7_packet(cmd)
+        
         logging.info(f"Transmitting Command: {cmd}")
         self.total_sent += 1
