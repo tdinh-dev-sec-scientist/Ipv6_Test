@@ -1,0 +1,6 @@
+#!/Users/dinhtruong/Desktop/Ipv6_Test/.venv_ai/bin/python3.12
+import sys
+from tensorflow.python.tools.import_pb_to_tensorboard import main
+if __name__ == '__main__':
+    sys.argv[0] = sys.argv[0].removesuffix('.exe')
+    sys.exit(main())
