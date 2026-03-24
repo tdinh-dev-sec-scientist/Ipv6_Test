@@ -1,3 +1,4 @@
+from sender import send_covert_traffic
 import time
 import random
 import logging
@@ -40,6 +41,9 @@ class CommandRunner:
         logging.info(f"Session Complete. Total packets sent: {self.total_sent}")
 
     def _send_payload(self, cmd):
-        
+        """
+        Gọi trực tiếp hàm gửi gói tin V7 từ file sender.py
+        """
         logging.info(f"Transmitting Command: {cmd}")
+        send_covert_traffic(cmd) 
         self.total_sent += 1

@@ -81,7 +81,7 @@ COMMAND_LIST = [
 
 if __name__ == "__main__":
     # Ensure command_runner.py and sender.py are in the same directory
-    runner = V7CommandRunner(COMMAND_LIST)
+    runner = CommandRunner(COMMAND_LIST)
     
     print(f"[*] Loaded {len(COMMAND_LIST)} safe Linux commands.")
     print("[*] Starting realistic C2 simulation...")
