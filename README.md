@@ -14,6 +14,8 @@ As the global transition from IPv4 to IPv6 accelerates to address address exhaus
 **The Defense**: We propose a behavioral defense using a 
 **Deep Learning Autoencoder** capthat detects the covert channel solely through anomalous reconstruction errors
 
+**Simulation Website** https://tdinh-dev-sec-scientist.github.io/Ipv6_covert_IDS_Simulation/
+
 ---
 
 ## 🛠️ Technical Implementation
