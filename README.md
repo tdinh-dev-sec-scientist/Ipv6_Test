@@ -15,6 +15,7 @@ As the global transition from IPv4 to IPv6 accelerates to address address exhaus
 **Deep Learning Autoencoder** capthat detects the covert channel solely through anomalous reconstruction errors
 
 **Simulation Website** https://tdinh-dev-sec-scientist.github.io/Ipv6_covert_IDS_Simulation/
+**Paper Link** https://drive.google.com/file/d/1rawbnIN314wDOjEaYnp-vfOkSmxjepi2/view?usp=sharing
 
 ---
 
