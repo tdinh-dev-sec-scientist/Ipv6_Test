@@ -72,7 +72,7 @@ python3 d3_replay.py --pcap malicious_raw.pcap --label covert
 python3 d3_replay.py --pcap 202604301400.pcap.gz --label benign --max-packets 1000000
 ```
 
-## What the experiments show (summary; regenerate for exact numbers)
+## What the experiments show:
 
 - **Naive PadN channel is trivially separable.** Real MAWI benign carries non-zero
   PadN content in 0.0000% of 1e6 packets, so a one-line RFC-8200 rule (`d3_replay.py`)
