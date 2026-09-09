@@ -1,0 +1,17 @@
+# Python dependencies for the IPv6 covert-channel detection pipeline.
+#
+# These are the packages the scripts import. Version PINS below are loose minimums
+# — pin exact versions from YOUR environment before release:
+#     pip freeze > requirements.txt
+#
+# NOTE: gen_final.py trains a Keras autoencoder and therefore needs TensorFlow.
+# The other scripts (gen_covert.py, parse_mawi_pcap.py, experiment3_deconfounded.py,
+# ocsvm_diagnostic.py, d3_replay.py) need only the scientific-Python + scapy stack.
+
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib          # only for plotting figures (fig_adaptive.pdf, etc.)
+scapy               # sender/receiver, parse_mawi_pcap.py, d3_replay.py
+tensorflow          # gen_final.py autoencoder (U1); pin the version you trained with
