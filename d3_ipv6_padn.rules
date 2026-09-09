@@ -1,0 +1,53 @@
+# ============================================================================
+# d3_ipv6_padn.rules  --  Suricata companion rule for the D3 defense
+#
+# HONEST SCOPING (read before using in the paper or on a resume):
+#   * This rule is a PRACTICAL APPROXIMATION of the exact D3 predicate. Suricata
+#     has no first-class "PadN option content" keyword, so it cannot cleanly
+#     express "a PadN option contains a non-zero byte." The precise predicate is
+#     implemented in d3_replay.py; THIS rule is the recognizable, deployable
+#     approximation.
+#   * It targets the NAIVE channel only. The adaptive channel sets PadN=0 and
+#     mimics benign Flow-Label/IAT; no static signature detects it. Report both:
+#     "Rule A catches the naive channel; no static rule catches the adaptive one."
+#   * Coverage/FP numbers MUST come from your own replay (see commands below).
+#     Do not cite any number you have not measured.
+#
+# Rule A1 (structural): alert on an IPv6 Destination Options extension header
+#   present on a flow masquerading as TLS/443. This is coarse: it fires on the
+#   PRESENCE of the Destination Options EH, which the covert channel always adds
+#   and which real backbone IPv6 essentially never uses (0.0000% in our MAWI
+#   trace). Tune/inspect before deployment.
+alert ip any any -> any 443 ( \
+    msg:"D3 IPv6 Destination-Options EH present on TLS port (possible PadN covert channel)"; \
+    decode-event:ipv6.exthdr_useless_fh; \
+    ipproto:ipv6; \
+    sid:3100001; rev:1; \
+    metadata:policy research, channel naive; \
+)
+
+# Rule A2 (byte-content, best-effort): match the Destination Options next-header
+#   pattern in the IPv6 header chain. The Destination Options EH type is 60; a
+#   preceding Next Header byte of 0x3c (60) indicates its presence. This is a
+#   heuristic content match and may need adjustment for your capture's layout;
+#   validate against d3_replay.py rather than trusting it blind.
+alert ipv6 any any -> any any ( \
+    msg:"D3 IPv6 Next Header = Destination Options (0x3c) heuristic"; \
+    content:"|3c|"; offset:6; depth:1; \
+    sid:3100002; rev:1; \
+    metadata:policy research, channel naive; \
+)
+
+# ----------------------------------------------------------------------------
+# REPLAY + COUNT (fill numbers from these, do not fabricate):
+#
+#   suricata -r malicious_raw.pcap -S d3_ipv6_padn.rules -l ./suri_covert --runmode single
+#   suricata -r mawi_trace.pcap    -S d3_ipv6_padn.rules -l ./suri_benign --runmode single
+#
+#   # count alerts (detections on covert; false positives on benign):
+#   jq -r 'select(.event_type=="alert") | .alert.signature_id' suri_covert/eve.json | sort | uniq -c
+#   jq -r 'select(.event_type=="alert") | .alert.signature_id' suri_benign/eve.json | sort | uniq -c
+#
+# Report: alerts on covert (detection) vs alerts on benign (false positives),
+# per signature id, alongside the exact d3_replay.py numbers.
+# ============================================================================
